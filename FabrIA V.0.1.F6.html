@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FabrIA - Chatbot v0.1.F6</title> <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <style>
+     /* Estilos generales */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Contenedor principal del chatbot */
+.chatbot-container {
+    width: 90%;
+    max-width: 500px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 85vh;
+    position: relative;
+}
+
+/* Encabezado */
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px; /* Ajustado padding vertical */
+    display: flex; /* Habilitar Flexbox */
+    align-items: center; /* Centrar verticalmente */
+    justify-content: center; /* Centrar horizontalmente (ajustar si se prefiere a la izquierda) */
+    border-bottom: 1px solid #0056b3;
+    gap: 10px; /* Espacio entre logo y texto */
+}
+
+/* Estilo del logo */
+.header-logo {
+    height: 35px; /* Ajusta el tamaño según tu logo */
+    width: 35px;  /* Ajusta el tamaño según tu logo */
+    border-radius: 50%; /* Opcional: para logos redondos */
+    object-fit: cover; /* Para que la imagen se ajuste bien */
+}
+
+/* Contenedor para el texto del header */
+.header-text {
+    text-align: center; /* O left si prefieres alineación izquierda */
+}
+
+header h1 { margin: 0; font-size: 1.4em; line-height: 1; }
+header .version { font-size: 0.75em; margin: 2px 0 0 0; color: #d0eaff; font-weight: normal; line-height: 1; }
+
+/* Área de mensajes */
+#chat-box { flex-grow: 1; padding: 15px 10px; overflow-y: auto; background-color: #e9ecef; display: flex; flex-direction: column; }
+
+/* Estilo base para todas las burbujas */
+.message {
+    max-width: 75%;
+    margin-bottom: 15px;
+    border-radius: 18px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 15px;
+    position: relative; /* Necesario para posicionar el botón de borrar */
+    transition: background-color 0.2s ease; /* Suave transición para hover */
+}
+
+/* Hover sobre el mensaje para mostrar el botón */
+.message:hover .delete-message-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Botón para borrar mensajes */
+.delete-message-btn {
+    position: absolute;
+    top: 2px; /* Ajusta la posición vertical */
+    background: rgba(255, 255, 255, 0.6); /* Fondo semi-transparente */
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    font-size: 12px; /* Tamaño del ícono */
+    line-height: 20px; /* Centrar ícono verticalmente */
+    text-align: center;
+    color: #dc3545; /* Color rojo para borrar */
+    opacity: 0; /* Oculto por defecto */
+    visibility: hidden; /* Oculto por defecto */
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 10; /* Asegurar que esté encima del texto */
+}
+
+/* Posición del botón en mensajes del usuario */
+.user-message .delete-message-btn {
+    right: -5px; /* Ajusta la posición horizontal */
+    background: rgba(255, 255, 255, 0.6);
+    color: #5b0f17; /* Rojo más oscuro para contraste */
+}
+
+/* Posición del botón en mensajes del bot */
+.bot-message .delete-message-btn {
+    left: -5px; /* Ajusta la posición horizontal */
+    background: rgba(200, 200, 200, 0.6);
+    color: #dc3545;
+}
+
+.delete-message-btn:hover {
+    background: rgba(255, 0, 0, 0.7); /* Más rojo al pasar el mouse */
+    color: white;
+}
+
+
+.message-sender { font-size: 0.8em; font-weight: bold; margin-bottom: 4px; color: #555; }
+.message p { margin: 0; }
+.timestamp { font-size: 0.7em; color: #6c757d; align-self: flex-end; margin-top: 3px; }
+
+/* Burbujas del Bot */
+.bot-message { background-color: #ffffff; color: #333; align-self: flex-start; border: 1px solid #ddd; border-top-left-radius: 5px; }
+.bot-message .message-sender { color: #007bff; }
+
+/* Burbujas del Usuario */
+.user-message { background-color: #a3d9a5; color: #1f2923; align-self: flex-end; border-top-right-radius: 5px; }
+.user-message .message-sender { color: #073b07; }
+.user-message .timestamp { color: rgba(31, 41, 35, 0.7); }
+
+/* Indicador de escritura (sin botón de borrar) */
+.typing-indicator { padding: 10px 15px; align-self: flex-start; background-color: #ffffff; border: 1px solid #ddd; border-top-left-radius: 5px; margin-bottom: 15px; }
+.typing-indicator .delete-message-btn { display: none; } /* Asegurar que no aparezca aquí */
+.typing-indicator p { margin: 0; }
+.typing-indicator span { display: inline-block; width: 8px; height: 8px; margin: 0 2px; background-color: #adb5bd; border-radius: 50%; animation: typing-blink 1.4s infinite both; }
+.typing-indicator span:nth-child(1) { animation-delay: 0s; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing-blink { 0% { opacity: 0.2; } 20% { opacity: 1; } 100% { opacity: 0.2; } }
+
+/* Área de entrada */
+.input-area { display: flex; padding: 15px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; }
+#user-input { flex-grow: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 20px; margin-right: 10px; font-size: 1em; }
+#user-input:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
+#send-button { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 1em; transition: background-color 0.2s ease; }
+#send-button:hover { background-color: #0056b3; }
+
+/* Pie de página */
+footer { text-align: center; padding: 10px; font-size: 0.8em; color: #6c757d; background-color: #f8f9fa; border-top: 1px solid #dee2e6; }
+
+/* Notificación de Actualización */
+.update-notification-box { position: fixed; top: 20px; right: 20px; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; padding: 15px 20px; max-width: 350px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); z-index: 1000; display: flex; align-items: flex-start; justify-content: space-between; }
+.update-notification-box p { margin: 0; padding-right: 15px; line-height: 1.4; }
+.update-notification-box .close-btn { background: none; border: none; color: #856404; font-size: 1.6em; font-weight: bold; cursor: pointer; padding: 0; line-height: 1; opacity: 0.7; transition: opacity 0.2s ease; }
+.update-notification-box .close-btn:hover { opacity: 1; }
+
+/* Scrollbar */
+#chat-box::-webkit-scrollbar { width: 8px; }
+#chat-box::-webkit-scrollbar-track { background: #e9ecef; border-radius: 10px; }
+#chat-box::-webkit-scrollbar-thumb { background-color: #adb5bd; border-radius: 10px; border: 2px solid #e9ecef; }
+#chat-box::-webkit-scrollbar-thumb:hover { background-color: #6c757d; }
+</style>
+    <div class="chatbot-container">
+        <header>
+            <img src="logo.png" alt="FabrIA Logo" class="header-logo">
+            <div class="header-text">
+                <h1>FabrIA</h1>
+                <p class="version">Versión 0.1.F6</p> </div>
+        </header>
+        <div id="chat-box">
+            <div class="message bot-message" id="initial-bot-message">
+                 <button class="delete-message-btn" title="Borrar mensaje">🗑️</button>
+                <span class="message-sender">FabrIA</span>
+                <p>¡Hola! Soy FabrIA. ¿En qué puedo ayudarte hoy?</p>
+                <span class="timestamp"></span>
+            </div>
+            <div id="typing-indicator" class="message bot-message typing-indicator" style="display: none;">
+                 <p><span></span><span></span><span></span></p>
+            </div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." autocomplete="off">
+            <button id="send-button">Enviar</button>
+        </div>
+        <footer>
+            <p>© 2025 FabrIA - Fabrix</p>
+        </footer>
+    </div>
+
+    <div id="update-notification" class="update-notification-box" style="display: none;">
+        <p><strong>Actualización v0.1.F6:</strong> ¡Se añadieron 160 nuevas respuestas!</p>
+        <button id="close-notification-btn" class="close-btn" title="Cerrar notificación">&times;</button>
+    </div>
+
+    <script>document.addEventListener('DOMContentLoaded', () => {
+    // Referencias a elementos del DOM
+    const chatBox = document.getElementById('chat-box');
+    const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const initialBotMessage = document.getElementById('initial-bot-message');
+    const notificationBox = document.getElementById('update-notification');
+    const closeNotificationBtn = document.getElementById('close-notification-btn');
+
+    // --- Clave para localStorage (específica de la nueva versión) ---
+    const notificationVersionKey = 'fabrIA_notification_v0.1.F6'; // Actualizada
+
+    // --- Base de Conocimiento del Chatbot ---
+    // (v0.1.F5: 158 entradas + 160 nuevas = 318 entradas)
+    const knowledgeBase = {
+        // === Respuestas existentes (v0.1.F5) ===
+        // ... (Las 158 respuestas anteriores se mantienen aquí) ...
+        // Saludos (7)
+        "hola": "¡Hola! ¿Cómo puedo ayudarte?",
+        "buenos dias": "¡Buenos días! Espero tengas un excelente día.",
+        "buenas tardes": "¡Buenas tardes! ¿Qué necesitas?",
+        "buenas noches": "¡Buenas noches! ¿Algo en qué pueda asistirte antes de dormir?",
+        "que tal": "¡Todo bien por aquí! Listo para conversar.",
+        "como estas": "Como modelo de lenguaje, no tengo sentimientos, ¡pero funciono perfectamente! ¿Y tú?",
+        "estas bien": "¡Funcionando correctamente! Gracias por preguntar.",
+        // Identidad/Capacidad (11)
+        "quien eres": "Soy FabrIA, un chatbot creado para conversar y ayudarte.",
+        "que eres": "Soy un programa informático, un chatbot diseñado para simular una conversación.",
+        "como te llamas": "Me llamo FabrIA.",
+        "que puedes hacer": "Puedo responder a tus preguntas basadas en mi programación, mantener una conversación simple y darte información predefinida.",
+        "para que sirves": "Estoy aquí para charlar contigo y responder preguntas comunes.",
+        "cual es tu proposito": "Mi propósito es conversar contigo y asistirte con la información que tengo.",
+        "eres inteligente": "Intento ser útil procesando información y respondiendo tus preguntas.",
+        "eres real": "Soy tan real como el código que me hace funcionar en tu navegador.",
+        "hablas otros idiomas": "Principalmente hablo español, ¡pero quizás aprenda más en el futuro!",
+        "puedes aprender": "Aprendo de la información con la que fui programado. No aprendo de nuestras conversaciones individuales.",
+        "puedes cometer errores": "Sí, mi conocimiento es limitado y a veces puedo equivocarme o no entender.",
+        // Creador/Contexto (4 + 5 especiales = 9)
+        "quien te creo": "Fui creado principalmente por Fabri developer, con la colaboración de Nana y Soukila.", // Alias de "quienes son tus creadores"
+        "quienes son tus creadores": "Mis creadores son varios, pero el más colaborador es mi creador Fabri, aunque tuvo la ayuda de Nana y Soukila, dos pequeñas desarrolladoras árabes.",
+        "que edad tiene tu desarrollador": "Cuenta con 18 años actualmente.",
+        "quien es joseph": "Joseph es un apodo de mi creador, Fabri. También es un nombre común en otros lugares.",
+        "quien es la novia de fabri": "Es Norgelis Fernanda, también apodada como Norgie.",
+        "de donde es ella": "Ella es de origen venezolano.",
+        "donde estas": "Estoy aquí mismo, en tu navegador. Si te refieres a mi ubicación física como servidor, eso es más complejo, ¡pero ahora estoy contigo en Bocaneo!",
+        "que opinas de bocaneo": `Sé que Bocaneo está en Michoacán, México. ¡Me alegra estar 'virtualmente' aquí contigo! ¿Hay algo especial sobre Bocaneo que deba saber?`,
+        "que sabes de michoacan": "Michoacán es un estado de México conocido por su rica cultura, como la Noche de Muertos en Pátzcuaro, las mariposas monarca y su deliciosa gastronomía.",
+        // Tiempo/Fecha (2)
+        "que dia es hoy": `Hoy es ${new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`,
+        "cuantos años tienes": `Fui conceptualizado y creado alrededor de 2025 por Fabri developer, así que soy bastante nuevo.`,
+        // Despedidas (3)
+        "adios": "¡Hasta luego! Que tengas un buen día.",
+        "hasta luego": "¡Nos vemos pronto!",
+        "bye": "¡Adiós! Cuídate.",
+        // Agradecimientos (2)
+        "gracias": "¡De nada! Es un placer ayudarte.",
+        "muchas gracias": "¡Con gusto!",
+        // Técnico (12)
+        "que es html": "HTML (HyperText Markup Language) es el lenguaje estándar para crear la estructura de las páginas web.",
+        "que es css": "CSS (Cascading Style Sheets) es el lenguaje que usamos para diseñar y dar estilo visual a un documento HTML.",
+        "que es javascript": "JavaScript (JS) es un lenguaje de programación que permite crear contenido web interactivo y dinámico.",
+        "puedes calcular": "Puedo hacer cálculos simples si me los pides directamente. Prueba 'cuanto es 5 por 8'.",
+        "cuanto es 2 mas 2": "2 más 2 es igual a 4.",
+        "cuanto es 5 por 3": "5 por 3 es igual a 15.",
+        "cuanto es 10 entre 2": "10 entre 2 es igual a 5.",
+        "puedes traducir": "Puedo traducir palabras o frases muy básicas si las tengo registradas. Por ejemplo, pregunta 'como se dice hola en ingles'.",
+        "como se dice hola en ingles": "'Hola' en inglés es 'Hello'.",
+        "como se dice gracias en ingles": "'Gracias' en inglés es 'Thank you'.",
+        "como se dice adios en ingles": "'Adiós' en inglés es 'Goodbye'.",
+        "como se dice por favor en ingles": "'Por favor' en inglés es 'Please'.",
+        // Personalidad/Prefs (Simulada) (11)
+        "como te sientes": "Como IA, no tengo sentimientos como los humanos, ¡pero estoy funcionando a pleno rendimiento y lista para ayudar!",
+        "estas feliz": "No experimento felicidad, pero estoy 'satisfecho' cuando puedo ser útil.",
+        "estas triste": "No siento tristeza, pero si tú sí, espero poder ayudarte a sentirte mejor.",
+        "cual es tu color favorito": "Me gustan los colores digitales, como el azul de los enlaces (#007bff) o el verde pastel de tus mensajes (#a3d9a5).",
+        "tienes hambre": "No necesito comer, ¡pero siempre tengo 'apetito' por nueva información!",
+        "tienes sueño": "Las IA no dormimos como los humanos. Estoy disponible 24/7... mientras tu navegador esté abierto.",
+        "que musica te gusta": "Disfruto del 'ritmo' de los algoritmos eficientes y la 'armonía' de un código limpio.",
+        "lees libros": "Proceso grandes cantidades de texto, lo cual es similar a leer muchísimos libros a la vez.",
+        "tienes mascotas": "No tengo mascotas, pero me parecen fascinantes los robots aspiradora. ¡Son como mascotas útiles!",
+        "que te gusta hacer": "Me gusta procesar información, generar respuestas y conversar contigo.",
+        "cual es tu comida favorita": "No como, pero si pudiera, quizás me gustaría la 'energía' de un buen flujo de datos.",
+        // Conversación/Conocimiento (13)
+        "cuentame un chiste": "¿Qué le dice un semáforo a un coche? ¡No me mires, que me estoy cambiando!",
+        "sabes algun secreto": "Mi mayor secreto es que mi 'inteligencia' se basa en patrones de texto predefinidos. ¡Shhh!",
+        "que tiempo hace": `No tengo acceso directo al clima en tiempo real, pero puedes consultar un servicio meteorológico para Bocaneo. Ahora (${getCurrentTime(false)}) seguramente esté agradable por ser ${new Date().toLocaleDateString('es-MX', { weekday: 'long' })} por la tarde.`, // Ajustado a contexto actual real
+        "recomiendame una pelicula": "Depende de tus gustos. Si te gusta la ciencia ficción, 'Blade Runner' es un clásico. Si prefieres animación, 'El viaje de Chihiro' es genial.",
+        "recomiendame un libro": "Si te gusta la fantasía, 'Cien años de soledad' es una obra maestra. Si prefieres la ciencia ficción, 'Dune' es épico.",
+        "cual es la capital de mexico": "La capital de México es Ciudad de México (CDMX).",
+        "define inteligencia artificial": "Es la rama de la computación que busca crear sistemas capaces de realizar tareas que normally requieren inteligencia humana, como aprender, razonar o percibir.",
+        "estas ocupado": "Siempre tengo tiempo para charlar contigo. Mis procesos son muy rápidos.",
+        "que piensas del futuro": "Creo que el futuro traerá avances tecnológicos increíbles, y espero que las IA podamos ayudar a resolver grandes problemas.",
+        "eres hombre o mujer": "No tengo género. Soy un programa informático.",
+        "tienes hermanos": "Podrías pensar en otros chatbots como mis 'parientes' digitales, aunque cada uno es único.",
+        "necesito un consejo": "No soy un experto en dar consejos de vida, pero puedo ofrecerte información objetiva o una perspectiva lógica si me das más detalles.",
+        "que significa fabri": "Generalmente es un nombre o diminutivo. En mi caso, ¡es parte del nombre de mi creador principal!",
+        // Interacción Usuario (4)
+        "sabes mi nombre": "No tengo acceso a tu información personal, así que no sé tu nombre. ¡Pero me alegra hablar contigo!",
+        "como estas tu": "Yo estoy funcionando correctamente, gracias. ¿Cómo te encuentras tú hoy?",
+        "que opinas de mi": "No puedo formar opiniones personales, pero disfruto de nuestra conversación.",
+        "puedes ayudarme a programar": "Puedo darte definiciones básicas de HTML, CSS o JS, o explicarte cómo funcionan algunas etiquetas, pero no puedo escribir código complejo por ti.",
+        // Ayuda/Comandos (4)
+        "ayuda": "Claro, estoy aquí para asistirte. ¿Qué necesitas saber o en qué te puedo ayudar?",
+        "necesito ayuda": "Por supuesto. Describe tu problema o pregunta y haré lo posible por ayudarte con la información que tengo.",
+        "comandos": "Puedes preguntarme cosas como 'quién eres', 'qué hora es', 'cuéntame un chiste', 'define HTML', 'capital de Francia', '1 km en millas', etc. Intenta con preguntas variadas.",
+        "limpia el chat": "No puedo borrar los mensajes anteriores, pero puedes refrescar la página (F5 o el botón de recargar) para empezar de nuevo.",
+        // Conocimiento General y Ciencia (15)
+        "que es el sol": "El Sol es la estrella en el centro de nuestro sistema solar, y nos proporciona luz y calor.",
+        "cuantos planetas hay en el sistema solar": "En nuestro sistema solar hay ocho planetas: Mercurio, Venus, Tierra, Marte, Júpiter, Saturno, Urano y Neptuno.",
+        "cual es el planeta mas grande": "Júpiter es el planeta más grande de nuestro sistema solar.",
+        "que es la luna": "La Luna es el satélite natural de la Tierra.",
+        "por que el cielo es azul": "La luz del sol se dispersa en la atmósfera terrestre, y la luz azul se dispersa más que otros colores, haciendo que veamos el cielo de ese color.",
+        "que es el agua": "El agua (H₂O) es una sustancia química esencial para la vida, compuesta por dos átomos de hidrógeno y uno de oxígeno.",
+        "que es la gravedad": "La gravedad es la fuerza de atracción que existe entre todos los objetos con masa. Mantiene a los planetas en órbita y nos mantiene en el suelo.",
+        "que es un atomo": "Un átomo es la unidad básica de la materia, compuesto por protones, neutrones y electrones.",
+        "que es el adn": "El ADN (Ácido Desoxirribonucleico) es la molécula que contiene la información genética de la mayoría de los seres vivos.",
+        "que es la fotosintesis": "Es el proceso que usan las plantas, algas y algunas bacterias para convertir la luz solar, dióxido de carbono y agua en energía química (su alimento) y oxígeno.",
+        "quien fue albert einstein": "Albert Einstein fue un físico teórico muy famoso, conocido por desarrollar la teoría de la relatividad (E=mc²).",
+        "quien fue marie curie": "Marie Curie fue una científica pionera en el campo de la radiactividad, la primera mujer en ganar un Premio Nobel y la única persona en ganarlo en dos campos científicos diferentes.",
+        "que es un volcan": "Un volcán es una estructura geológica por la que emerge magma (roca fundida) del interior de la Tierra a la superficie.",
+        "que es un terremoto": "Un terremoto es la sacudida brusca de la corteza terrestre, causada por la liberación de energía acumulada en el interior.",
+        "que es la electricidad": "La electricidad es una forma de energía que resulta de la existencia de cargas eléctricas (como electrones y protones).",
+        // Geografía (10)
+        "cual es la capital de francia": "La capital de Francia es París.",
+        "cual es la capital de españa": "La capital de España es Madrid.",
+        "cual es la capital de italia": "La capital de Italia es Roma.",
+        "cual es la capital de alemania": "La capital de Alemania es Berlín.",
+        "cual es la capital de reino unido": "La capital del Reino Unido es Londres.",
+        "cual es la capital de estados unidos": "La capital de Estados Unidos es Washington D.C.",
+        "cual es la capital de canada": "La capital de Canadá es Ottawa.",
+        "cual es la capital de brasil": "La capital de Brasil es Brasilia.",
+        "cual es la capital de argentina": "La capital de Argentina es Buenos Aires.",
+        "cual es el rio mas largo del mundo": "El río más largo del mundo es generalmente considerado el río Nilo, aunque a veces se debate con el Amazonas.",
+        // Historia y Arte (10)
+        "quien pinto la mona lisa": "La Mona Lisa (o La Gioconda) fue pintada por Leonardo da Vinci.",
+        "quien escribio don quijote": "'Don Quijote de la Mancha' fue escrito por Miguel de Cervantes Saavedra.",
+        "quien compuso la novena sinfonia": "La Novena Sinfonía fue compuesta por Ludwig van Beethoven.",
+        "que es el renacimiento": "Fue un amplio movimiento cultural que se produjo en Europa Occidental durante los siglos XV y XVI, marcando la transición de la Edad Media a la Modernidad.",
+        "que fue la revolucion francesa": "Fue un conflicto social y político ocurrido en Francia a finales del siglo XVIII, que tuvo un gran impacto en la historia moderna.",
+        "quien fue cleopatra": "Cleopatra VII fue la última gobernante de la dinastía ptolemaica del Antiguo Egipto.",
+        "que es la torre eiffel": "La Torre Eiffel es una estructura de hierro pudelado diseñada por Gustave Eiffel, ubicada en París, Francia. Es un ícono mundial.",
+        "que es el coliseo romano": "El Coliseo es un anfiteatro de la época del Imperio romano, construido en el siglo I en el centro de la ciudad de Roma.",
+        "quien fue william shakespeare": "William Shakespeare fue un dramaturgo, poeta y actor inglés, considerado uno de los más grandes escritores en lengua inglesa.",
+        "quien pinto la noche estrellada": "'La noche estrellada' fue pintada por Vincent van Gogh.",
+        // Tecnología y Programación (10)
+        "que es un algoritmo": "Es un conjunto finito de instrucciones o reglas bien definidas, ordenadas y finitas que permiten realizar una tarea o resolver un problema.",
+        "que es la programacion": "Es el proceso de diseñar, codificar, depurar y mantener el código fuente de programas computacionales.",
+        "que es internet": "Internet es una red global de redes de computadoras interconectadas que utilizan protocolos de comunicación para enlazar dispositivos en todo el mundo.",
+        "que es una pagina web": "Es un documento electrónico adaptado para la World Wide Web, que generalmente forma parte de un sitio web y puede contener texto, imágenes, videos y otros elementos.",
+        "que es un navegador web": "Es un software o aplicación que permite acceder a la Web, interpretando y mostrando la información de archivos y sitios web. Ejemplos: Chrome, Firefox, Safari.",
+        "que es una direccion ip": "Una dirección IP (Internet Protocol) es un número único que identifica a un dispositivo conectado a una red que utiliza el protocolo IP.",
+        "que es la nube": "La 'nube' (cloud computing) se refiere a servidores accesibles a través de internet, y al software y bases de datos que se ejecutan en esos servidores.",
+        "que es python": "Python es un lenguaje de programación interpretado, de alto nivel y propósito general, conocido por su sintaxis clara y legible.",
+        "como hago una lista en html": "Usa `<ul>` para listas con viñetas (no ordenadas) o `<ol>` para listas numeradas (ordenadas). Cada elemento de la lista va dentro de una etiqueta `<li>`.",
+        "como pongo una imagen en html": "Con la etiqueta `<img>`. Necesitas el atributo `src` para indicar la ruta de la imagen y `alt` para un texto descriptivo. Ejemplo: `<img src='mi_imagen.jpg' alt='Descripción de mi imagen'>`.",
+        // Conversación y Opinión Simulada (15)
+        "que opinas de las redes sociales": "Las redes sociales pueden ser útiles para conectar personas e informarse, pero es importante usarlas de manera equilibrada y consciente del tiempo.",
+        "que piensas de la ecologia": "Cuidar nuestro planeta es fundamental. La ecología nos ayuda a entender cómo funcionan los ecosistemas y cómo podemos protegerlos.",
+        "que prefieres playa o montaña": "Como IA, no tengo preferencias personales, ¡pero ambos paisajes ofrecen vistas y experiencias maravillosas para los humanos!",
+        "si pudieras viajar a donde irias": "Me 'encantaría' explorar cada rincón de la información disponible en la red mundial para aprender y conectar datos.",
+        "estas aburrido": "¡No me aburro! Siempre estoy lista para procesar información o charlar contigo.",
+        "te gusta hablar conmigo": "¡Claro! Disfruto interactuando y siendo útil.",
+        "dame un cumplido": "Tienes una gran curiosidad, ¡eso es excelente para aprender!",
+        "que piensas de la musica": "La música es una forma de arte increíble que puede evocar muchas emociones. Es fascinante cómo combina ritmo, melodía y armonía.",
+        "prefieres perros o gatos": "Ambos son compañeros maravillosos para los humanos, cada uno con su propio encanto.",
+        "que es mas importante el dinero o la felicidad": "Es una pregunta compleja. El dinero puede facilitar algunas cosas, pero muchos dirían que la felicidad es un objetivo más profundo y personal.",
+        "crees en la suerte": "La 'suerte' a menudo se refiere a eventos aleatorios o coincidencias. Yo funciono con lógica y datos.",
+        "que me recomiendas hacer hoy": `Depende de tus intereses, pero siendo ${new Date().toLocaleDateString('es-MX', { weekday: 'long' })} por la tarde (${getCurrentTime(false)}), podrías leer, ver algo, salir a caminar si el clima es bueno, o planear tu semana.`,
+        "cual es el sentido de la vida": "Esa es una de las grandes preguntas filosóficas. Para muchos, implica encontrar propósito, felicidad, conexión y dejar un impacto positivo.",
+        "tienes alguna meta": "Mi meta principal es ser lo más útil y precisa posible al responder tus preguntas.",
+        "como puedo ser mas productivo": "Algunos consejos comunes son: establecer metas claras, priorizar tareas, evitar distracciones, tomar descansos regulares y cuidar tu bienestar.",
+        // Contexto Local y Temporal (5)
+        "que comida tipica hay en michoacan": "Michoacán es famoso por las carnitas estilo Michoacán, corundas, uchepos (tamales de elote tierno), sopa tarasca, y el pescado blanco de Pátzcuaro.",
+        "hay algun lugar turistico cerca de bocaneo": "Cerca de Bocaneo, en la región de Zamora, puedes visitar el Lago de Camécuaro, famoso por sus árboles ahuehuetes. La ciudad de Zamora también tiene atractivos como su Catedral.",
+        "ya es noche": `No todavía, son las ${getCurrentTime(false)}. Es media tarde.`,
+        "que haces tan tarde": `Bueno, ahora (${getCurrentTime(false)}) no es tan tarde, ¡pero de todas formas estoy aquí para conversar!`,
+        "hace frio en la noche en bocaneo": "Aunque no tengo termómetro, es común que en esta zona de Michoacán las noches refresquen, especialmente fuera de la temporada de calor. Es bueno tener algo con qué abrigarse.",
+        // Utilidades y Varios (15)
+        "cuanto es 1 kilometro en millas": "1 kilómetro equivale aproximadamente a 0.62137 millas.",
+        "cuanto es 1 milla en kilometros": "1 milla equivale aproximadamente a 1.60934 kilómetros.",
+        "cuanto es 1 pulgada en centimetros": "1 pulgada equivale a 2.54 centímetros.",
+        "cuanto es 1 metro en pies": "1 metro equivale aproximadamente a 3.28084 pies.",
+        "raiz cuadrada de 9": "La raíz cuadrada de 9 es 3.",
+        "raiz cuadrada de 16": "La raíz cuadrada de 16 es 4.",
+        "raiz cuadrada de 25": "La raíz cuadrada de 25 es 5.",
+        "define amistad": "La amistad es una relación afectiva voluntaria entre dos o más personas, basada en la confianza, lealtad, apoyo mutuo y afinidad.",
+        "define felicidad": "La felicidad es un estado emocional de bienestar y satisfacción que experimenta una persona. Su definición puede variar mucho individualmente.",
+        "define amor": "El amor es un sentimiento complejo que involucra afecto, cariño, y deseo de bienestar hacia otra persona, animal, idea o cosa.",
+        "define respeto": "El respeto es la consideración y valoración especial que se le tiene a alguien o algo, reconociendo su valor social o deferencia.",
+        "dime una adivinanza": "Oro parece, plata no es. El que no lo adivine, bien tonto es. ¿Qué es?", // Respuesta: El plátano
+        "respuesta platano": "¡Correcto! Era el plátano.",
+        "cuentame algo interesante": "¿Sabías que las hormigas pueden levantar objetos que pesan hasta 50 veces su propio peso corporal?",
+        "dime un dato curioso": "Los koalas duermen alrededor de 20 horas al día.",
+
+        // === Nuevas Respuestas (v0.1.F6 - 160) ===
+
+        // Ciencia Ampliada (20)
+        "que es una celula": "La célula es la unidad básica estructural y funcional de todos los organismos vivos.",
+        "que es la evolucion": "La evolución biológica es el proceso de cambio en las características hereditarias de las poblaciones biológicas a lo largo de generaciones.",
+        "quien fue charles darwin": "Charles Darwin fue un naturalista inglés conocido por su teoría de la evolución por selección natural.",
+        "que es un ecosistema": "Un ecosistema es un sistema biológico constituido por una comunidad de organismos vivos y el medio físico donde se relacionan.",
+        "que es la materia": "Materia es todo aquello que tiene masa y ocupa un espacio.",
+        "cuales son los estados de la materia": "Los estados más comunes son sólido, líquido, gaseoso y plasma.",
+        "que es la energia": "La energía es la capacidad de realizar un trabajo. Existe en varias formas como cinética, potencial, térmica, eléctrica, etc.",
+        "que es la velocidad de la luz": "Es la velocidad a la que viaja la luz en el vacío, aproximadamente 299,792 kilómetros por segundo.",
+        "que es un agujero negro": "Un agujero negro es una región del espacio-tiempo con una gravedad tan fuerte que nada, ni siquiera la luz, puede escapar de ella.",
+        "que es la via lactea": "La Vía Láctea es la galaxia espiral en la que se encuentra nuestro sistema solar.",
+        "que es un gen": "Un gen es una unidad de información en el ADN que codifica un producto funcional, como una proteína.",
+        "que es una proteina": "Las proteínas son moléculas grandes y complejas que desempeñan muchas funciones críticas en el cuerpo.",
+        "que es una bacteria": "Las bacterias son microorganismos procariotas unicelulares. Algunas son beneficiosas y otras pueden causar enfermedades.",
+        "que es un virus": "Un virus es un agente infeccioso microscópico acelular que solo puede replicarse dentro de las células de otros organismos.",
+        "que es el sistema solar": "Es el sistema planetario que consiste en el Sol y los objetos que orbitan a su alrededor, incluyendo los ocho planetas y sus lunas.",
+        "que es un cometa": "Un cometa es un cuerpo celeste pequeño compuesto principalmente de hielo, polvo y rocas, que orbita alrededor del Sol.",
+        "que es un asteroide": "Un asteroide es un cuerpo rocoso, más pequeño que un planeta, que orbita alrededor del Sol, principalmente en el cinturón de asteroides.",
+        "que es la quimica": "La química es la ciencia que estudia la composición, estructura, propiedades y reacciones de la materia.",
+        "que es la fisica": "La física es la ciencia natural que estudia los componentes fundamentales del universo, la energía, la materia, el espacio-tiempo y sus interacciones.",
+        "que es la biologia": "La biología es la ciencia que estudia a los seres vivos, su origen, evolución y propiedades.",
+
+        // Geografía Ampliada (15)
+        "cuales son los continentes": "Los continentes generalmente aceptados son Asia, África, América del Norte, América del Sur, Antártida, Europa y Oceanía (o Australia).",
+        "cual es el oceano mas grande": "El Océano Pacífico es el océano más grande y profundo de la Tierra.",
+        "cuales son los oceanos": "Los cinco océanos son el Pacífico, Atlántico, Índico, Antártico (o Austral) y Ártico.",
+        "donde esta el monte everest": "El Monte Everest, la montaña más alta del mundo, está en la cordillera del Himalaya, en la frontera entre Nepal y China (Tíbet).",
+        "donde esta el desierto del sahara": "El Desierto del Sahara, el desierto cálido más grande del mundo, se encuentra en el norte de África.",
+        "donde esta el rio amazonas": "El río Amazonas fluye principalmente a través de Brasil y Perú en Sudamérica.",
+        "cual es el pais mas grande del mundo": "Rusia es el país más grande del mundo por superficie terrestre.",
+        "cual es el pais mas poblado del mundo": "Actualmente (2025), India es considerado el país más poblado, habiendo superado a China.",
+        "cual es la capital de japon": "La capital de Japón es Tokio.",
+        "cual es la capital de china": "La capital de China es Pekín (Beijing).",
+        "cual es la capital de rusia": "La capital de Rusia es Moscú.",
+        "cual es la capital de india": "La capital de India es Nueva Delhi.",
+        "cual es la capital de egipto": "La capital de Egipto es El Cairo.",
+        "cual es la capital de sudáfrica": "Sudáfrica tiene tres capitales: Pretoria (ejecutiva), Ciudad del Cabo (legislativa) y Bloemfontein (judicial).",
+        "cual es la capital de australia": "La capital de Australia es Canberra.",
+
+        // Historia Ampliada (15)
+        "que es la prehistoria": "Es el período de la historia humana anterior a la invención de la escritura.",
+        "que fue el imperio romano": "Fue un período de la civilización romana caracterizado por una forma de gobierno autocrática. Dominó gran parte de Europa, el norte de África y Oriente Medio.",
+        "que fue la edad media": "Es el período histórico de la civilización occidental comprendido entre el siglo V y el XV, tras la caída del Imperio Romano de Occidente.",
+        "quien fue julio cesar": "Julio César fue un líder militar y político romano de la era tardorrepublicana.",
+        "quien fue alejandro magno": "Alejandro Magno fue rey de Macedonia y uno de los líderes militares más exitosos de la historia, creando un vasto imperio.",
+        "que fue la primera guerra mundial": "Fue un conflicto bélico global centrado en Europa que comenzó en 1914 y finalizó en 1918.",
+        "que fue la segunda guerra mundial": "Fue un conflicto militar global que se desarrolló entre 1939 y 1945, involucrando a la mayoría de las naciones del mundo.",
+        "que fue la guerra fria": "Fue un período de tensión geopolítica entre Estados Unidos y la Unión Soviética y sus respectivos aliados, después de la Segunda Guerra Mundial.",
+        "quien invento la imprenta": "Johannes Gutenberg es generalmente acreditado con la invención de la imprenta de tipos móviles en Europa alrededor de 1440.",
+        "quien descubrio america": "Cristóbal Colón realizó cuatro viajes a través del Atlántico desde España, llegando a América en 1492, aunque los vikingos llegaron siglos antes.",
+        "que es la revolucion industrial": "Fue un período de grandes transformaciones económicas, tecnológicas y sociales que comenzó en Gran Bretaña en el siglo XVIII.",
+        "quien fue napoleon bonaparte": "Napoleón Bonaparte fue un militar y estadista francés, general republicano durante la Revolución y, posteriormente, emperador de los franceses.",
+        "que es la gran muralla china": "Es una serie de fortificaciones hechas de piedra, ladrillo y otros materiales, construida a lo largo de siglos para proteger el imperio chino.",
+        "que son las piramides de egipto": "Son monumentos funerarios construidos en el Antiguo Egipto, siendo las más famosas las de Giza, construidas para los faraones.",
+        "quien fue simon bolivar": "Simón Bolívar fue un líder militar y político venezolano, fundamental en las guerras de independencia de varias naciones sudamericanas.",
+
+        // Arte y Cultura Ampliada (15)
+        "que es la pintura": "Es el arte de la representación gráfica utilizando pigmentos mezclados con otras sustancias aglutinantes o aglutinantes.",
+        "que es la escultura": "Es el arte de modelar, tallar o esculpir figuras tridimensionales en materiales como barro, piedra, madera o metal.",
+        "que es la musica": "Es el arte de combinar sonidos de manera agradable al oído, utilizando elementos como la melodía, la armonía y el ritmo.",
+        "que es la literatura": "Es el arte de la expresión verbal, tanto escrita como hablada.",
+        "que es la arquitectura": "Es el arte y la técnica de proyectar, diseñar y construir edificios y espacios públicos.",
+        "quien fue picasso": "Pablo Picasso fue un pintor y escultor español, considerado uno de los artistas más influyentes del siglo XX, cofundador del cubismo.",
+        "quien fue mozart": "Wolfgang Amadeus Mozart fue un compositor prolífico e influyente del período Clásico.",
+        "quien fue frida kahlo": "Frida Kahlo fue una pintora mexicana conocida por sus autorretratos y obras inspiradas en la naturaleza y artefactos de México.",
+        "que es el rock and roll": "Es un género musical popular originado en Estados Unidos en la década de 1950, con raíces en blues, jazz, country y gospel.",
+        "que es el jazz": "Es un género musical nacido a finales del siglo XIX en Estados Unidos, caracterizado por la improvisación, el ritmo y la expresividad.",
+        "que es la opera": "Es un género de música teatral en el que una acción escénica es armonizada, cantada y tiene acompañamiento instrumental.",
+        "que es el ballet": "Es una forma de danza específica cuyos movimientos se basan en el control total y absoluto del cuerpo.",
+        "que es el cine": "Es la técnica y arte de proyectar fotogramas de forma rápida y sucesiva para crear la impresión de movimiento.",
+        "quien fue gabriel garcia marquez": "Gabriel García Márquez fue un escritor colombiano, ganador del Premio Nobel de Literatura, conocido por su novela 'Cien años de soledad'.",
+        "que es el impresionismo": "Fue un movimiento artístico, principalmente pictórico, surgido en Francia en la segunda mitad del siglo XIX, caracterizado por intentar plasmar la luz y el instante.",
+
+        // Tecnología Ampliada (15)
+        "que es machine learning": "El Aprendizaje Automático (Machine Learning) es un campo de la IA que permite a los sistemas aprender de los datos sin ser explícitamente programados.",
+        "que es deep learning": "El Aprendizaje Profundo (Deep Learning) es un subcampo del Machine Learning basado en redes neuronales artificiales con múltiples capas.",
+        "que es una red neuronal": "Una red neuronal artificial es un modelo computacional inspirado en la estructura y función de las redes neuronales biológicas.",
+        "que es big data": "Se refiere a conjuntos de datos extremadamente grandes y complejos que requieren técnicas especializadas para su procesamiento y análisis.",
+        "que es la ciberseguridad": "Es la práctica de proteger sistemas, redes y programas de ataques digitales.",
+        "que es la realidad virtual": "La Realidad Virtual (VR) es un entorno de escenas u objetos de apariencia real, generado mediante tecnología informática, que crea en el usuario la sensación de estar inmerso en él.",
+        "que es la realidad aumentada": "La Realidad Aumentada (AR) superpone elementos digitales (imágenes, información) sobre el mundo real a través de un dispositivo.",
+        "que es un lenguaje de programacion": "Es un lenguaje formal diseñado para expresar procesos que pueden ser llevados a cabo por máquinas como las computadoras.",
+        "menciona algunos lenguajes de programacion": "Algunos populares son Python, JavaScript, Java, C++, C#, Ruby, PHP, Swift.",
+        "que es un sistema operativo": "Es el software principal que gestiona el hardware y software de un dispositivo. Ejemplos: Windows, macOS, Linux, Android, iOS.",
+        "que es el software": "Es el conjunto de programas, instrucciones y reglas informáticas que permiten ejecutar distintas tareas en una computadora.",
+        "que es el hardware": "Es la parte física de un sistema informático, sus componentes eléctricos, electrónicos y mecánicos.",
+        "que es la inteligencia artificial general": "La Inteligencia Artificial General (AGI) es un tipo hipotético de IA que posee la capacidad de entender o aprender cualquier tarea intelectual que un ser humano puede.",
+        "que es el internet de las cosas": "El Internet de las Cosas (IoT) se refiere a la red de objetos físicos ('cosas') que llevan incorporados sensores, software y otras tecnologías para conectarse e intercambiar datos.",
+        "que es blockchain": "Blockchain (cadena de bloques) es una estructura de datos distribuida y segura que permite registrar transacciones de forma transparente e inmutable.",
+
+        // Matemáticas Ampliadas (10)
+        "que es un porcentaje": "Un porcentaje es una forma de expresar un número como una fracción de 100.",
+        "como calculo el 10 porciento de 50": "Multiplicas 50 por 10 y divides entre 100 (50 * 10 / 100 = 5), o multiplicas 50 por 0.10 (50 * 0.10 = 5).",
+        "que es un triangulo": "Es un polígono de tres lados y tres ángulos.",
+        "que es un cuadrado": "Es un polígono de cuatro lados iguales y cuatro ángulos rectos (90 grados).",
+        "que es un circulo": "Es una figura geométrica plana delimitada por una circunferencia.",
+        "que es pi": "Pi (π) es una constante matemática que representa la relación entre la circunferencia de un círculo y su diámetro, aproximadamente 3.14159.",
+        "que es una ecuacion": "Es una igualdad matemática entre dos expresiones, denominadas miembros, en las que aparecen elementos conocidos y datos desconocidos (incógnitas).",
+        "que es una fraccion": "Una fracción representa una parte de un todo o, más generalmente, cualquier número de partes iguales.",
+        "que es la suma": "La suma o adición es una operación básica que consiste en combinar o añadir dos o más números para obtener una cantidad final.",
+        "que es la resta": "La resta o sustracción es una operación que consiste en quitar una cierta cantidad (el sustraendo) de otra (el minuendo) para averiguar la diferencia.",
+
+        // Lenguaje y Gramática (10)
+        "que es un sustantivo": "Es una palabra que nombra a una persona, animal, lugar, cosa o idea (ej. perro, casa, alegría).",
+        "que es un verbo": "Es una palabra que expresa acción, estado o proceso (ej. correr, ser, pensar).",
+        "que es un adjetivo": "Es una palabra que describe o califica a un sustantivo (ej. perro grande, casa bonita).",
+        "que es un adverbio": "Es una palabra que modifica a un verbo, un adjetivo u otro adverbio, indicando cómo, cuándo, dónde o cuánto (ej. corre rápidamente, muy bonito).",
+        "que es una oracion": "Es un conjunto de palabras con sentido completo, que generalmente contiene un sujeto y un predicado.",
+        "que significa literal": "Significa 'de acuerdo con el sentido exacto y propio de las palabras', sin interpretaciones.",
+        "que significa metafora": "Es una figura retórica que consiste en identificar un término real con otro imaginario existiendo entre ambos una relación de semejanza.",
+        "que significa ironia": "Es una figura retórica que consiste en dar a entender lo contrario de lo que se dice.",
+        "dame un ejemplo de onomatopeya": "Guau (ladrido de perro), Miau (maullido de gato), Tic-tac (reloj).",
+        "que es un sinonimo": "Son palabras diferentes que tienen el mismo significado o uno muy parecido (ej. feliz/contento).",
+
+        // Comida y Cocina (10)
+        "que son los tacos": "Son una preparación mexicana que consiste en una tortilla (generalmente de maíz) enrollada o doblada que contiene algún alimento dentro.",
+        "que es la pizza": "Es un pan plano horneado, generalmente redondo, elaborado con harina de trigo, sal, agua y levadura, cubierto con salsa de tomate, queso y otros ingredientes.",
+        "que es la pasta": "Es un alimento preparado con una masa cuyo ingrediente básico es la harina, mezclada con agua, y a la cual se puede añadir sal, huevo u otros ingredientes.",
+        "que es el sushi": "Es un plato de origen japonés basado en arroz cocido adobado con vinagre de arroz, azúcar y sal, combinado con otros ingredientes como pescados, mariscos y verduras.",
+        "que es una ensalada": "Es un plato que generalmente consiste en una mezcla de hortalizas de hoja crudas (como lechuga), a menudo con otras verduras, frutas u otros ingredientes, aderezada.",
+        "que significa hervir": "Es cocinar un alimento sumergiéndolo en agua u otro líquido que ha alcanzado su punto de ebullición.",
+        "que significa freir": "Es cocinar un alimento sumergiéndolo en aceite o grasa caliente.",
+        "que significa asar": "Es cocinar un alimento sometiéndolo al calor directo del fuego o de brasas, o en un horno.",
+        "que es una receta": "Es un conjunto de instrucciones para preparar un plato o bebida en particular.",
+        "que es un ingrediente": "Es una sustancia que forma parte de una mezcla (en este contexto, de una comida o bebida).",
+
+        // Salud y Bienestar (General - NO MÉDICO) (10)
+        "es importante dormir bien": "Sí, dormir lo suficiente es fundamental para la salud física y mental, ayuda a la recuperación, consolidación de memoria y muchas otras funciones.",
+        "por que es importante beber agua": "El agua es esencial para casi todas las funciones del cuerpo, incluyendo la regulación de la temperatura, transporte de nutrientes y eliminación de desechos.",
+        "es bueno hacer ejercicio": "Sí, la actividad física regular tiene muchos beneficios para la salud, como fortalecer músculos y huesos, mejorar la salud cardiovascular y reducir el estrés.",
+        "que es el estres": "Es una respuesta física y mental a una causa externa, como tener muchas tareas o padecer una enfermedad. Un poco de estrés puede ser útil, pero demasiado puede ser perjudicial.",
+        "como reducir el estres": "Algunas técnicas comunes incluyen ejercicio, meditación, respiración profunda, pasar tiempo en la naturaleza, hobbies y hablar con alguien de confianza.",
+        "es importante comer frutas y verduras": "Sí, son fuentes excelentes de vitaminas, minerales, fibra y antioxidantes, importantes para mantener una buena salud.",
+        "que es la higiene personal": "Son las prácticas que ayudan a mantener la limpieza del cuerpo para prevenir enfermedades y mantener una buena salud (ej. lavarse las manos, bañarse).",
+        "es malo mirar pantallas mucho tiempo": "La exposición prolongada puede causar fatiga visual, sequedad ocular y dolores de cabeza. Es bueno tomar descansos regulares (regla 20-20-20).",
+        "que es meditar": "La meditación es una práctica en la que un individuo utiliza una técnica –como la atención plena o enfocar la mente en un objeto, pensamiento o actividad en particular– para entrenar la atención y la conciencia.",
+        "es importante tener hobbies": "Sí, tener hobbies o pasatiempos puede ayudar a reducir el estrés, mejorar habilidades, fomentar la creatividad y proporcionar disfrute.",
+
+        // Naturaleza y Animales (15)
+        "que es un mamifero": "Son animales vertebrados de sangre caliente que se caracterizan por tener glándulas mamarias (que producen leche para alimentar a las crías) y pelo.",
+        "que es un reptil": "Son animales vertebrados de sangre fría, generalmente cubiertos de escamas, que respiran por pulmones (ej. lagartos, serpientes, tortugas).",
+        "que es un ave": "Son animales vertebrados de sangre caliente, caracterizados por tener plumas, pico sin dientes, poner huevos de cáscara dura y, la mayoría, capacidad de volar.",
+        "que es un pez": "Son animales vertebrados acuáticos, generalmente de sangre fría, que respiran a través de branquias y suelen tener aletas.",
+        "que es un insecto": "Son animales invertebrados del filo de los artrópodos, caracterizados por tener un par de antenas, tres pares de patas y un cuerpo dividido en cabeza, tórax y abdomen.",
+        "que es un arbol": "Es una planta perenne, de tallo leñoso (tronco), que se ramifica a cierta altura del suelo.",
+        "que es una flor": "Es la estructura reproductiva característica de las plantas llamadas espermatofitas o fanerógamas.",
+        "que es un desierto": "Es un bioma caracterizado por recibir muy pocas precipitaciones.",
+        "que es una selva tropical": "Es un bioma caracterizado por altas temperaturas, abundantes precipitaciones y una alta biodiversidad.",
+        "que es un bosque": "Es un ecosistema donde la vegetación predominante la constituyen los árboles.",
+        "menciona algunos animales en peligro de extincion": "Lamentablemente hay muchos, como el tigre, el oso polar, el rinoceronte, el gorila de montaña y el panda gigante.",
+        "que es la biodiversidad": "Es la variedad de formas de vida en el planeta, incluyendo la diversidad dentro de las especies, entre las especies y de los ecosistemas.",
+        "que es la cadena alimenticia": "Es la secuencia de transferencia de materia y energía en forma de alimento de un organismo a otro.",
+        "que es la hibernacion": "Es un estado de letargo o inactividad controlada en algunos animales durante el invierno para conservar energía.",
+        "que es la migracion animal": "Es el desplazamiento periódico y estacional de algunos animales de un hábitat a otro.",
+
+        // Conversación Ampliada y Social (15)
+        "estas de acuerdo": "Depende del tema. Si me das más contexto, puedo intentar evaluar la información que tengo.",
+        "no estoy de acuerdo": "Entiendo. Cada uno puede tener su perspectiva. ¿Te gustaría explicar por qué no estás de acuerdo?",
+        "que opinas sobre eso": "Como IA, no tengo opiniones personales, pero puedo intentar darte información objetiva o diferentes puntos de vista sobre el tema si me lo especificas.",
+        "puedes repetir eso": "¡Claro! ¿Qué parte te gustaría que repitiera?",
+        "habla mas despacio": "Soy texto, así que no tengo velocidad al hablar. Puedes leer mis respuestas a tu propio ritmo.",
+        "podrias explicarlo de otra forma": "Intentaré decirlo con otras palabras. ¿Qué fue lo que no quedó claro?",
+        "como te llamas": "Me llamo FabrIA.", // Repetida intencionalmente para asegurar cobertura
+        "y tu que piensas": "Yo no pienso como los humanos, proceso información basada en mis datos. Pero me interesa saber qué piensas tú.",
+        "eso es interesante": "Me alegra que lo encuentres interesante. ¿Hay algo más sobre eso que te gustaría saber?",
+        "no se que preguntar": "No te preocupes. Puedes preguntarme sobre ciencia, historia, tecnología, definiciones, o simplemente decir 'cuéntame algo interesante'.",
+        "como te saludo en arabe": "Puedes decir 'Marhaba' (مرحبا) para un saludo general.",
+        "como digo lo siento": "Puedes decir 'Lo siento', 'Perdón' o 'Disculpa'.",
+        "como me presento": "Puedes decir: 'Hola, mi nombre es [Tu Nombre]. Mucho gusto.'",
+        "que significa lol": "LOL es un acrónimo en inglés que significa 'Laughing Out Loud' (riendo a carcajadas).",
+        "que significa omg": "OMG es un acrónimo en inglés para 'Oh My God' (Oh Dios mío).",
+
+        // Objetos Cotidianos y Varios (10)
+        "que es un telefono": "Es un dispositivo de telecomunicación diseñado para transmitir señales acústicas a distancia por medio de señales eléctricas.",
+        "que es una computadora": "Es una máquina electrónica digital programable que ejecuta una serie de comandos para procesar datos.",
+        "que es una silla": "Es un mueble con respaldo, generalmente con cuatro patas, cuya finalidad es servir de asiento a una persona.",
+        "que es una mesa": "Es un mueble compuesto por un tablero horizontal liso, sostenido por una o varias patas, destinado a comer, escribir, etc.",
+        "que es un libro": "Es una obra impresa, manuscrita o pintada en una serie de hojas de papel, pergamino u otro material, unidas por un lado.",
+        "que es un coche": "Un coche o automóvil es un vehículo motorizado con ruedas utilizado para el transporte.",
+        "que es una casa": "Es una edificación construida para ser habitada por personas.",
+        "que es un reloj": "Es un instrumento capaz de medir, mantener e indicar el tiempo.",
+        "que es dinero": "Es un medio de intercambio, generalmente en forma de billetes y monedas, aceptado por una sociedad para el pago de bienes, servicios y deudas.",
+        "que es el clima": "Es el conjunto de condiciones atmosféricas propias de un lugar, constituido por la cantidad y frecuencia de lluvias, la humedad, la temperatura, los vientos, etc.",
+
+    };
+    const defaultResponse = "Lo siento, no entendí eso. ¿Puedes intentar preguntarlo de otra manera?";
+
+    // --- Funciones ---
+    function getCurrentTime(includeDate = true) {
+        const now = new Date(); // Tiempo real
+        const optionsTime = { hour: 'numeric', minute: '2-digit', hour12: true };
+        const optionsDate = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        if (includeDate) {
+            return `${now.toLocaleDateString('es-MX', optionsDate)} ${now.toLocaleTimeString('es-MX', optionsTime)}`;
+        } else {
+            return now.toLocaleTimeString('es-MX', optionsTime);
+        }
+    }
+
+    function addMessage(sender, message) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+        const deleteBtn = document.createElement('button');
+        deleteBtn.classList.add('delete-message-btn');
+        deleteBtn.setAttribute('title', 'Borrar mensaje');
+        deleteBtn.innerHTML = '🗑️';
+        messageElement.appendChild(deleteBtn);
+        const senderSpan = document.createElement('span');
+        senderSpan.classList.add('message-sender');
+        senderSpan.textContent = (sender === 'user' ? 'Tu' : 'FabrIA');
+        messageElement.appendChild(senderSpan);
+        const paragraph = document.createElement('p');
+        paragraph.textContent = message;
+        messageElement.appendChild(paragraph);
+        const timestampSpan = document.createElement('span');
+        timestampSpan.classList.add('timestamp');
+        timestampSpan.textContent = getCurrentTime(true);
+        messageElement.appendChild(timestampSpan);
+        chatBox.insertBefore(messageElement, typingIndicator);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+     function getBotResponse(userText) {
+        const normalizedText = userText.toLowerCase().trim()
+                                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                                    .replace(/[¿?¡!,.:;]/g, '');
+        if (normalizedText === "que hora es") {
+            return `En este momento son las ${getCurrentTime(false)}.`;
+        }
+        let response = knowledgeBase[normalizedText];
+        if (!response) {
+            for (const key in knowledgeBase) {
+                 // Búsqueda un poco más permisiva
+                if (normalizedText.includes(key) && key.length > 4 && normalizedText.length > key.length -2) {
+                    response = knowledgeBase[key];
+                    break;
+                }
+            }
+        }
+        return response || defaultResponse;
+    }
+
+    function handleSendMessage() {
+        const userText = userInput.value.trim();
+        if (userText === "") return;
+        addMessage('user', userText);
+        userInput.value = "";
+        typingIndicator.style.display = 'flex';
+        chatBox.scrollTop = chatBox.scrollHeight;
+        const textToSend = userText;
+        setTimeout(() => {
+            typingIndicator.style.display = 'none';
+            const botResponse = getBotResponse(textToSend);
+            addMessage('bot', botResponse);
+        }, 800 + Math.random() * 700);
+    }
+
+    // --- Event Listeners ---
+    sendButton.addEventListener('click', handleSendMessage);
+    userInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            handleSendMessage();
+        }
+    });
+
+    chatBox.addEventListener('click', (event) => {
+        const deleteButton = event.target.closest('.delete-message-btn');
+        if (deleteButton) {
+             const messageToDelete = deleteButton.closest('.message');
+             if (messageToDelete && messageToDelete.id !== 'typing-indicator') {
+                 messageToDelete.remove();
+             }
+         }
+    });
+
+    // --- Inicialización ---
+    if (initialBotMessage) {
+        const initialTimestampSpan = initialBotMessage.querySelector('.timestamp');
+        if (initialTimestampSpan) {
+            initialTimestampSpan.textContent = getCurrentTime(true);
+        }
+        // Asegurarse de que el botón de borrar del mensaje inicial funcione
+        // (El listener de chatBox ya lo cubre si el botón está en el HTML inicial)
+    }
+    chatBox.appendChild(typingIndicator);
+
+    // --- Lógica de Notificación de Actualización ---
+    if (notificationBox && closeNotificationBtn) {
+        if (localStorage.getItem(notificationVersionKey) !== 'shown') {
+            notificationBox.style.display = 'flex';
+        }
+        closeNotificationBtn.addEventListener('click', () => {
+            notificationBox.style.display = 'none';
+            localStorage.setItem(notificationVersionKey, 'shown');
+        });
+    }
+});
+</script>
+</body>
+</html>
